@@ -1,7 +1,8 @@
 import axios from "axios"
+import { env } from "@/env"
 
 export const fetcher = axios.create({
-  baseURL: "/api-proxied",
+  baseURL: env.NEXT_PUBLIC_API_BASE,
   withCredentials: true,
 })
 
