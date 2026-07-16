@@ -1,14 +1,16 @@
 import type { NextConfig } from "next"
-import { env } from "./env"
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@workspace/ui"],
 
   async rewrites() {
+    const apiBase =
+      process.env.API_BASE ?? "http://localhost:5000/api/v1"
+
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${env.NEXT_PUBLIC_API_BASE}/:path*`,
+        destination: `${apiBase}/:path*`,
       },
     ]
   },

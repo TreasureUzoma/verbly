@@ -1,6 +1,6 @@
 import { z } from "zod"
 export const envSchema = z.object({
-  NEXT_PUBLIC_API_BASE: z.url(),
+  // add client-accessible env vars here
 })
 
 export const env = envSchema.parse(process.env)
