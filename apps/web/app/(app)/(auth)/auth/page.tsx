@@ -7,12 +7,7 @@ import Image from "next/image"
 import { SpinnerIcon } from "@phosphor-icons/react"
 
 export default function LoginPage() {
-  const { mutate: login, isPending } = useAuthLogin()
-
-  const handleGoogleLogin = useCallback(async () => {
-    const mockGoogleToken = "mock_google_token_" + Date.now()
-    login({ token: mockGoogleToken })
-  }, [login])
+  const { mutate: googleLogin, isPending } = useAuthLogin()
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
@@ -26,7 +21,7 @@ export default function LoginPage() {
 
         <Button
           size="lg"
-          onClick={handleGoogleLogin}
+          onClick={() => googleLogin()}
           disabled={isPending}
           className="w-full"
         >

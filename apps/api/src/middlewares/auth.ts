@@ -1,13 +1,15 @@
 import type { MiddlewareHandler } from "hono"
 import { getCookie, setCookie } from "hono/cookie"
-import { verify, sign } from "hono/jwt"
+import { verify } from "hono/jwt"
 import { eq } from "drizzle-orm"
 import { db } from "../db/index.js"
 import { users } from "../db/schema.js"
 import { env } from "../env.js"
-
-const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60
-const FIFTEEN_MINUTES_SECONDS = 15 * 60
+import {
+  FIFTEEN_MINUTES_SECONDS,
+  generateTokens,
+  SEVEN_DAYS_SECONDS,
+} from "../utils/auth-tokens.js"
 
 type AuthEnv = {
   Variables: {
@@ -19,36 +21,9 @@ type AuthEnv = {
   }
 }
 
-async function generateTokens(
-  userId: string,
-  email: string,
-  name?: string | null
-) {
-  const currentTime = Math.floor(Date.now() / 1000)
-
-  const accessToken = await sign(
-    {
-      id: userId,
-      email,
-      name,
-      exp: currentTime + FIFTEEN_MINUTES_SECONDS,
-    },
-    env.JWT_ACCESS_SECRET
-  )
-
-  const refreshToken = await sign(
-    { id: userId, exp: currentTime + SEVEN_DAYS_SECONDS },
-    env.JWT_REFRESH_SECRET
-  )
-
-  const refreshExpDate = new Date(Date.now() + SEVEN_DAYS_SECONDS * 1000)
-
-  return { accessToken, refreshToken, refreshExpDate }
-}
-
 export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
   try {
-    const accessToken = getCookie(c, "letteraAccessToken")
+    const accessToken = getCookie(c, "verblyAccessToken")
 
     if (accessToken) {
       try {
@@ -67,9 +42,9 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
       } catch {}
     }
 
-    const refreshToken = getCookie(c, "letteraRefreshToken")
+    const refreshToken = getCookie(c, "verblyRefreshToken")
     if (!refreshToken) {
-      return c.json({ message: "Unauthorized", success: false }, 401)
+      return c.json({ message: "Unauthorized 2", success: false }, 401)
     }
 
     let decodedRefresh: { id: string }
@@ -81,8 +56,9 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
       )) as {
         id: string
       }
-    } catch {
-      return c.json({ message: "Unauthorized", success: false }, 401)
+    } catch (error) {
+      console.log(error)
+      return c.json({ message: "Unauthorized 3", success: false }, 401)
     }
 
     const [user] = await db
@@ -92,13 +68,13 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
       .limit(1)
 
     if (!user) {
-      return c.json({ message: "Unauthorized", success: false }, 401)
+      return c.json({ message: "Unauthorized 1", success: false }, 401)
     }
 
     const { accessToken: newAccess, refreshToken: newRefresh } =
       await generateTokens(user.id, user.email, user.name)
 
-    setCookie(c, "letteraAccessToken", newAccess, {
+    setCookie(c, "verblyAccessToken", newAccess, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Lax",
@@ -106,7 +82,7 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
       maxAge: FIFTEEN_MINUTES_SECONDS,
     })
 
-    setCookie(c, "letteraRefreshToken", newRefresh, {
+    setCookie(c, "verblyRefreshToken", newRefresh, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Lax",

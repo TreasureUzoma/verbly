@@ -1,6 +1,12 @@
 import { serve } from "@hono/node-server"
 import { Hono } from "hono"
+import { cors } from "hono/cors"
 import { logger } from "hono/logger"
+import authRoute from "./routes/api/auth.js"
+import { env } from "./env.js"
+import type { AuthType } from "./types.js"
+import type { Context } from "hono"
+import { withAuth } from "./middlewares/auth.js"
 
 const app = new Hono()
 
@@ -28,14 +34,36 @@ app.get("/", (c) => {
   })
 })
 
-const api = new Hono().basePath("/api")
+const api = new Hono().basePath("/api/v1")
+
+api.use(
+  "/*",
+  cors({
+    origin: env.WEB_URL,
+    credentials: true,
+  })
+)
+
+api.route("/auth", authRoute)
+
+// requires auth sessions
+api.use("*", withAuth)
+
+api.get("/session", (c: Context) => {
+  const user = c.get("user") as AuthType | undefined
+  return c.json({
+    success: true,
+    data: user,
+    message: "Fetched User Session Successfully",
+  })
+})
 
 app.route("/", api)
 
 serve(
   {
     fetch: app.fetch,
-    port: 3000,
+    port: 5000,
   },
   (info) => {
     console.log(`Server is running on http://localhost:${info.port}`)
