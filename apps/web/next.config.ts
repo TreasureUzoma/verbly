@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${env.API_BASE}/:path*`,
+        destination: `${env.NEXT_PUBLIC_API_BASE}/:path*`,
       },
     ]
   },
