@@ -1,7 +1,7 @@
 import axios from "axios"
 
 export const fetcher = axios.create({
-  baseURL: "/api/v1",
+  baseURL: "/api-proxied",
   withCredentials: true,
 })
 
