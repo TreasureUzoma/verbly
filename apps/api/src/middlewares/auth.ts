@@ -23,6 +23,30 @@ type AuthEnv = {
 
 export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
   try {
+    // First try Authorization header (for cross-domain)
+    const authHeader = c.req.header("Authorization")
+    if (authHeader?.startsWith("Bearer ")) {
+      const accessToken = authHeader.slice(7) // Remove "Bearer " prefix
+      try {
+        const decoded = (await verify(
+          accessToken,
+          env.JWT_ACCESS_SECRET,
+          "HS256"
+        )) as {
+          id: string
+          email: string
+          name?: string | null
+        }
+
+        c.set("user", decoded)
+        return await next()
+      } catch (error) {
+        console.log("Invalid bearer token:", error)
+        // Continue to cookie check if bearer token is invalid
+      }
+    }
+
+    // Fallback to cookie-based auth (for same-domain)
     const accessToken = getCookie(c, "verblyAccessToken")
 
     if (accessToken) {
@@ -44,7 +68,10 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
 
     const refreshToken = getCookie(c, "verblyRefreshToken")
     if (!refreshToken) {
-      return c.json({ message: "Unauthorized 2", success: false }, 401)
+      return c.json(
+        { message: "Unauthorized: No valid token found", success: false },
+        401
+      )
     }
 
     let decodedRefresh: { id: string }
@@ -58,7 +85,10 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
       }
     } catch (error) {
       console.log(error)
-      return c.json({ message: "Unauthorized 3", success: false }, 401)
+      return c.json(
+        { message: "Unauthorized: Invalid refresh token", success: false },
+        401
+      )
     }
 
     const [user] = await db
@@ -68,7 +98,10 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
       .limit(1)
 
     if (!user) {
-      return c.json({ message: "Unauthorized 1", success: false }, 401)
+      return c.json(
+        { message: "Unauthorized: User not found", success: false },
+        401
+      )
     }
 
     const { accessToken: newAccess, refreshToken: newRefresh } =
@@ -77,7 +110,7 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
     setCookie(c, "verblyAccessToken", newAccess, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       path: "/",
       maxAge: FIFTEEN_MINUTES_SECONDS,
     })
@@ -85,7 +118,7 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
     setCookie(c, "verblyRefreshToken", newRefresh, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       path: "/",
       maxAge: SEVEN_DAYS_SECONDS,
     })
