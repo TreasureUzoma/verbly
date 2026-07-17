@@ -1,5 +1,6 @@
 import type { NextConfig } from "next"
 const API_BASE = process.env.API_BASE || "https://verbly-api.vercel.app/api/v1"
+console.log(API_BASE)
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@workspace/ui"],
