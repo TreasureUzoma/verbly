@@ -1,10 +1,31 @@
-import { sign } from "hono/jwt"
-import { setCookie } from "hono/cookie"
 import type { Context } from "hono"
 import { env } from "../env.js"
+import { generateSignedCookie } from "hono/cookie"
+import { sign } from "hono/jwt"
 
 export const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60
 export const FIFTEEN_MINUTES_SECONDS = 15 * 60
+
+const authCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "Lax",
+  path: "/",
+} as const
+
+const setSignedAuthCookie = async (
+  c: Context,
+  name: string,
+  value: string,
+  secret: string,
+  maxAge: number
+) => {
+  const cookie = await generateSignedCookie(name, value, secret, {
+    ...authCookieOptions,
+    maxAge,
+  })
+  c.header("Set-Cookie", cookie, { append: true })
+}
 
 export const generateTokens = async (
   userId: string,
@@ -36,35 +57,24 @@ export const setAuthCookies = async (
   accessToken: string,
   refreshToken: string
 ): Promise<void> => {
-  // In development with proxy, don't set domain so cookies work on localhost
-  // In production, domain will be set automatically by the browser
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax" as const,
-    path: "/",
-  }
+  await setSignedAuthCookie(
+    c,
+    "verblyAccessToken",
+    accessToken,
+    env.JWT_ACCESS_SECRET,
+    FIFTEEN_MINUTES_SECONDS
+  )
 
-  setCookie(c, "verblyAccessToken", accessToken, {
-    ...cookieOptions,
-    maxAge: FIFTEEN_MINUTES_SECONDS,
-  })
-
-  setCookie(c, "verblyRefreshToken", refreshToken, {
-    ...cookieOptions,
-    maxAge: SEVEN_DAYS_SECONDS,
-  })
+  await setSignedAuthCookie(
+    c,
+    "verblyRefreshToken",
+    refreshToken,
+    env.JWT_REFRESH_SECRET,
+    SEVEN_DAYS_SECONDS
+  )
 }
 
 export const clearAuthCookies = async (c: Context): Promise<void> => {
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax" as const,
-    path: "/",
-    maxAge: 0,
-  }
-
-  setCookie(c, "verblyAccessToken", "", cookieOptions)
-  setCookie(c, "verblyRefreshToken", "", cookieOptions)
+  await setSignedAuthCookie(c, "verblyAccessToken", "", env.JWT_ACCESS_SECRET, 0)
+  await setSignedAuthCookie(c, "verblyRefreshToken", "", env.JWT_REFRESH_SECRET, 0)
 }

@@ -16,23 +16,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  async headers() {
-    return [
-      {
-        source: "/api-proxied/:path*",
-        headers: [
-          {
-            key: "Access-Control-Allow-Credentials",
-            value: "true",
-          },
-          {
-            key: "Access-Control-Allow-Origin",
-            value: process.env.NEXT_PUBLIC_API_BASE || API_BASE,
-          },
-        ],
-      },
-    ]
-  },
 }
 
 export default nextConfig

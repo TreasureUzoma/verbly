@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from "hono"
-import { getCookie, setCookie } from "hono/cookie"
+import { getSignedCookie } from "hono/cookie"
 import { verify } from "hono/jwt"
 import { eq } from "drizzle-orm"
 import { db } from "../db/index.js"
@@ -24,7 +24,11 @@ type AuthEnv = {
 
 export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
   try {
-    const accessToken = getCookie(c, "verblyAccessToken")
+    const accessToken = await getSignedCookie(
+      c,
+      env.JWT_ACCESS_SECRET,
+      "verblyAccessToken"
+    )
 
     if (accessToken) {
       try {
@@ -43,7 +47,11 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
       } catch {}
     }
 
-    const refreshToken = getCookie(c, "verblyRefreshToken")
+    const refreshToken = await getSignedCookie(
+      c,
+      env.JWT_REFRESH_SECRET,
+      "verblyRefreshToken"
+    )
     if (!refreshToken) {
       return c.json({ message: "Unauthorized", success: false }, 401)
     }
