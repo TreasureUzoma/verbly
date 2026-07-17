@@ -36,37 +36,35 @@ export const setAuthCookies = async (
   accessToken: string,
   refreshToken: string
 ): Promise<void> => {
-  setCookie(c, "verblyAccessToken", accessToken, {
+  // In development with proxy, don't set domain so cookies work on localhost
+  // In production, domain will be set automatically by the browser
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax",
+    sameSite: "Lax" as const,
     path: "/",
+  }
+
+  setCookie(c, "verblyAccessToken", accessToken, {
+    ...cookieOptions,
     maxAge: FIFTEEN_MINUTES_SECONDS,
   })
 
   setCookie(c, "verblyRefreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax",
-    path: "/",
+    ...cookieOptions,
     maxAge: SEVEN_DAYS_SECONDS,
   })
 }
 
 export const clearAuthCookies = async (c: Context): Promise<void> => {
-  setCookie(c, "verblyAccessToken", "", {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax",
+    sameSite: "Lax" as const,
     path: "/",
     maxAge: 0,
-  })
+  }
 
-  setCookie(c, "verblyRefreshToken", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax",
-    path: "/",
-    maxAge: 0,
-  })
+  setCookie(c, "verblyAccessToken", "", cookieOptions)
+  setCookie(c, "verblyRefreshToken", "", cookieOptions)
 }

@@ -8,6 +8,7 @@ import { env } from "../env.js"
 import {
   FIFTEEN_MINUTES_SECONDS,
   generateTokens,
+  setAuthCookies,
   SEVEN_DAYS_SECONDS,
 } from "../utils/auth-tokens.js"
 
@@ -73,22 +74,7 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
 
     const { accessToken: newAccess, refreshToken: newRefresh } =
       await generateTokens(user.id, user.email, user.name)
-
-    setCookie(c, "verblyAccessToken", newAccess, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-      path: "/",
-      maxAge: FIFTEEN_MINUTES_SECONDS,
-    })
-
-    setCookie(c, "verblyRefreshToken", newRefresh, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-      path: "/",
-      maxAge: SEVEN_DAYS_SECONDS,
-    })
+    await setAuthCookies(c, newAccess, newRefresh)
 
     c.set("user", {
       id: user.id,
