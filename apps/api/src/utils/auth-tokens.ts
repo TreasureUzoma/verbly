@@ -1,15 +1,14 @@
 import type { Context } from "hono"
 import { env } from "../env.js"
-import { generateSignedCookie } from "hono/cookie"
+import { deleteCookie, setSignedCookie } from "hono/cookie"
 import { sign } from "hono/jwt"
 
 export const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60
 export const FIFTEEN_MINUTES_SECONDS = 15 * 60
 
-const authCookieOptions = {
+const baseAuthCookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "Lax",
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   path: "/",
 } as const
 
@@ -20,11 +19,16 @@ const setSignedAuthCookie = async (
   secret: string,
   maxAge: number
 ) => {
-  const cookie = await generateSignedCookie(name, value, secret, {
-    ...authCookieOptions,
+  // Vercel sends x-forwarded-proto for the actual protocol (https in prod)
+  const isSecure =
+    c.req.header("x-forwarded-proto") === "https" ||
+    process.env.NODE_ENV === "production"
+
+  await setSignedCookie(c, name, value, secret, {
+    ...baseAuthCookieOptions,
+    secure: isSecure,
     maxAge,
   })
-  c.header("Set-Cookie", cookie, { append: true })
 }
 
 export const generateTokens = async (
@@ -75,6 +79,6 @@ export const setAuthCookies = async (
 }
 
 export const clearAuthCookies = async (c: Context): Promise<void> => {
-  await setSignedAuthCookie(c, "verblyAccessToken", "", env.JWT_ACCESS_SECRET, 0)
-  await setSignedAuthCookie(c, "verblyRefreshToken", "", env.JWT_REFRESH_SECRET, 0)
+  deleteCookie(c, "verblyAccessToken", baseAuthCookieOptions)
+  deleteCookie(c, "verblyRefreshToken", baseAuthCookieOptions)
 }
