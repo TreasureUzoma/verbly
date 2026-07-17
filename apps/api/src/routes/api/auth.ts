@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import type { AuthType, AppBindings, ServiceResponse } from "../../types.js"
 import type { Context } from "hono"
-import { generateTokens, setAuthCookies } from "../../utils/auth-tokens.js"
+import { generateTokens, setAuthCookies, clearAuthCookies } from "../../utils/auth-tokens.js"
 import { createOauthUser, getGoogleAuthUrl } from "../../services/auth.js"
 import { env } from "../../env.js"
 
@@ -75,6 +75,15 @@ authRoute.get("/google/callback", async (c) => {
   }
 
   return c.redirect("/login?error=auth_failed", 302)
+})
+
+authRoute.post("/logout", async (c) => {
+  await clearAuthCookies(c)
+  return c.json({
+    success: true,
+    message: "Logged out successfully",
+    data: null,
+  })
 })
 
 export default authRoute

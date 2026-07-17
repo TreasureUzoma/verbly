@@ -17,7 +17,9 @@
         "GITHUB_CLIENT_SECRET",
         "APP_URL",
         "WEB_URL",
-        "PORT"
+        "PORT",
+        "NEXT_PUBLIC_API_BASE",
+        "API_BASE"
       ]
     },
 
@@ -44,7 +46,9 @@
         "GITHUB_CLIENT_SECRET",
         "APP_URL",
         "WEB_URL",
-        "PORT"
+        "PORT",
+        "NEXT_PUBLIC_API_BASE",
+        "API_BASE"
       ]
     }
   }

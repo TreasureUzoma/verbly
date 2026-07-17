@@ -3,8 +3,10 @@ import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 import authRoute from "./routes/api/auth.js"
+import wordsRoute from "./routes/api/words.js"
+import profileRoute from "./routes/api/profile.js"
 import { env } from "./env.js"
-import type { AuthType } from "./types.js"
+import type { AuthType, AppBindings } from "./types.js"
 import type { Context } from "hono"
 import { withAuth } from "./middlewares/auth.js"
 
@@ -34,7 +36,7 @@ app.get("/", (c) => {
   })
 })
 
-const api = new Hono().basePath("/api/v1")
+const api = new Hono<AppBindings>().basePath("/api/v1")
 
 api.use(
   "/*",
@@ -49,7 +51,7 @@ api.route("/auth", authRoute)
 // requires auth sessions
 api.use("*", withAuth)
 
-api.get("/session", (c: Context) => {
+api.get("/session", (c: Context<AppBindings>) => {
   const user = c.get("user") as AuthType | undefined
   return c.json({
     success: true,
@@ -57,6 +59,9 @@ api.get("/session", (c: Context) => {
     message: "Fetched User Session Successfully",
   })
 })
+
+api.route("/words", wordsRoute)
+api.route("/profile", profileRoute)
 
 app.route("/", api)
 
@@ -73,4 +78,3 @@ if (!process.env.VERCEL) {
     }
   )
 }
-

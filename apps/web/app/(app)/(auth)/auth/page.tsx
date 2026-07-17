@@ -1,10 +1,9 @@
 "use client"
 
 import { Button } from "@workspace/ui/components/button"
-import { useCallback } from "react"
 import { useAuthLogin } from "../hooks/use-auth-login"
 import Image from "next/image"
-import { SpinnerIcon } from "@phosphor-icons/react"
+import { SpinnerGapIcon } from "@phosphor-icons/react"
 
 export default function LoginPage() {
   const { mutate: googleLogin, isPending } = useAuthLogin()
@@ -27,7 +26,7 @@ export default function LoginPage() {
         >
           Sign in with Google{" "}
           {isPending ? (
-            <SpinnerIcon />
+            <SpinnerGapIcon />
           ) : (
             <Image
               src={"/assets/logos/google-g.png"}

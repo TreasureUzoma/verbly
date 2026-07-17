@@ -5,6 +5,9 @@ import {
   text,
   timestamp,
   uuid,
+  integer,
+  date,
+  boolean,
 } from "drizzle-orm/pg-core"
 
 export const userAuthMethodEnum = pgEnum("user_auth_method", [
@@ -36,4 +39,65 @@ export const users = pgTable("users", {
   status: userStatusEnum("status").default("active"),
   role: userRoleEnum("role").default("user"),
   subscriptionType: userSubscriptionEnum("subscription_type").default("free"),
+})
+
+// Daily words table - one word per day for all users
+export const dailyWords = pgTable("daily_words", {
+  id: serial("id").primaryKey(),
+  word: text("word").notNull(),
+  definition: text("definition").notNull(),
+  pronunciation: text("pronunciation").notNull(),
+  examples: text("examples").notNull(), // JSON string of examples array
+  date: date("date").notNull().unique(), // The date this word is featured
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+// User streaks table - tracks daily learning streaks
+export const userStreaks = pgTable("user_streaks", {
+  id: serial("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  currentStreak: integer("current_streak").default(0).notNull(),
+  longestStreak: integer("longest_streak").default(0).notNull(),
+  lastCompletedDate: date("last_completed_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Saved words table - user's saved words
+export const savedWords = pgTable("saved_words", {
+  id: serial("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  dailyWordId: integer("daily_word_id")
+    .notNull()
+    .references(() => dailyWords.id, { onDelete: "cascade" }),
+  savedAt: timestamp("saved_at").defaultNow().notNull(),
+})
+
+// User daily completions - tracks which days a user has completed
+export const userDailyCompletions = pgTable("user_daily_completions", {
+  id: serial("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  dailyWordId: integer("daily_word_id")
+    .notNull()
+    .references(() => dailyWords.id, { onDelete: "cascade" }),
+  completedAt: timestamp("completed_at").defaultNow().notNull(),
+  date: date("date").notNull(),
+})
+
+// Learned words - tracks words the user has marked as learned
+export const learnedWords = pgTable("learned_words", {
+  id: serial("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  dailyWordId: integer("daily_word_id")
+    .notNull()
+    .references(() => dailyWords.id, { onDelete: "cascade" }),
+  learnedAt: timestamp("learned_at").defaultNow().notNull(),
 })
