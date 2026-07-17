@@ -36,52 +36,36 @@ export const setAuthCookies = async (
   accessToken: string,
   refreshToken: string
 ): Promise<void> => {
-  const isProduction = process.env.NODE_ENV === "production"
-
   setCookie(c, "verblyAccessToken", accessToken, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "None" : "Lax", // "None" required for cross-domain
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
     path: "/",
     maxAge: FIFTEEN_MINUTES_SECONDS,
-    // Remove domain restriction for cross-domain setup
   })
 
   setCookie(c, "verblyRefreshToken", refreshToken, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "None" : "Lax", // "None" required for cross-domain
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
     path: "/",
     maxAge: SEVEN_DAYS_SECONDS,
-    // Remove domain restriction for cross-domain setup
   })
 }
 
-// Alternative: Return tokens in response for header-based auth
-export const getTokenResponse = (accessToken: string, refreshToken: string) => {
-  return {
-    accessToken,
-    refreshToken,
-    tokenType: "Bearer",
-    expiresIn: FIFTEEN_MINUTES_SECONDS,
-  }
-}
-
 export const clearAuthCookies = async (c: Context): Promise<void> => {
-  const isProduction = process.env.NODE_ENV === "production"
-
   setCookie(c, "verblyAccessToken", "", {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "None" : "Lax",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
     path: "/",
     maxAge: 0,
   })
 
   setCookie(c, "verblyRefreshToken", "", {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "None" : "Lax",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
     path: "/",
     maxAge: 0,
   })
