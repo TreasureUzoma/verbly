@@ -3,7 +3,9 @@ import { env } from "@/env"
 
 export const fetcher = axios.create({
   baseURL:
-    env.NEXT_PUBLIC_API_BASE || env.API_BASE || "http://localhost:5000/api/v1",
+    env.NEXT_PUBLIC_API_BASE ||
+    env.API_BASE ||
+    "https://verbly-api.vercel.app/api/v1",
   withCredentials: true,
 })
 
