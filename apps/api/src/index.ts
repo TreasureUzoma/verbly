@@ -42,7 +42,6 @@ api.use(
   "/*",
   cors({
     origin: env.WEB_URL,
-    credentials: true,
   })
 )
 
