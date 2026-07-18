@@ -1,102 +1,135 @@
-"use client"
-
-import { useGetSavedWords, useLearnWord, useGetLearnedWords } from "@/hooks/use-words"
+import { redirect } from "next/navigation"
+import { api } from "@/lib/api/api"
 import { Button } from "@workspace/ui/components/button"
-import { CheckCircleIcon, HeartIcon } from "@phosphor-icons/react"
-import { useState } from "react"
+import { CheckCircleIcon, HeartIcon } from "@phosphor-icons/react/dist/ssr"
 
-export default function SavedPage() {
-  const { data: savedWords = [], isLoading: isSavedLoading } = useGetSavedWords()
-  const { data: learnedWords = [] } = useGetLearnedWords()
-  const learnMutation = useLearnWord()
-  const [message, setMessage] = useState<string | null>(null)
+interface SavedWord {
+  id: number
+  wordId: number
+  word: string
+  pronunciation: string
+  definition: string
+  examples: string[]
+}
 
-  const handleLearn = async (wordId: number) => {
-    try {
-      await learnMutation.mutateAsync(wordId)
-      setMessage("Word successfully marked as learned!")
-      setTimeout(() => setMessage(null), 3000)
-    } catch (err: any) {
-      setMessage(err.response?.data?.message || "Failed to mark word as learned.")
-      setTimeout(() => setMessage(null), 3000)
-    }
+interface LearnedWord {
+  word: string
+}
+
+async function learnWordAction(formData: FormData) {
+  const wordId = formData.get("wordId")
+  if (!wordId) {
+    redirect("/dashboard/saved")
   }
 
-  if (isSavedLoading) {
+  await api.post("/words/learn", { wordId: Number(wordId) })
+  redirect("/dashboard/saved")
+}
+
+export default async function SavedPage() {
+  const [savedWords, learnedWords] = await Promise.all([
+    api
+      .get<SavedWord[]>("/words/saved", { tags: ["saved-words"] })
+      .catch(() => []),
+    api
+      .get<LearnedWord[]>("/words/learned", { tags: ["learned-words"] })
+      .catch(() => []),
+  ])
+
+  if (!savedWords.length) {
     return (
-      <div className="pb-24 p-4 space-y-4">
-        <div className="h-8 w-48 bg-foreground/10 animate-pulse rounded" />
-        <div className="h-32 w-full bg-foreground/10 animate-pulse rounded" />
-        <div className="h-32 w-full bg-foreground/10 animate-pulse rounded" />
+      <div className="pb-24">
+        <div className="space-y-6 p-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Saved Words</h1>
+            <p className="text-sm opacity-70">0 saved words to review</p>
+          </div>
+
+          <div className="space-y-3 rounded-md border border-dashed p-8 text-center">
+            <HeartIcon
+              size={32}
+              weight="regular"
+              className="mx-auto opacity-50"
+            />
+            <p className="text-sm font-medium">Your saved library is empty</p>
+            <p className="mx-auto max-w-xs text-xs opacity-60">
+              Save new words from the Home page as you encounter them to review
+              them later here.
+            </p>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="pb-24">
-      <div className="p-4 space-y-6">
+      <div className="space-y-6 p-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Saved Words</h1>
           <p className="text-sm opacity-70">
-            {savedWords.length === 1 ? "1 saved word" : `${savedWords.length} saved words`} to review
+            {savedWords.length === 1
+              ? "1 saved word"
+              : `${savedWords.length} saved words`}{" "}
+            to review
           </p>
         </div>
 
-        {message && (
-          <div className="border p-3 text-center text-xs font-bold rounded-md">
-            {message}
-          </div>
-        )}
+        <div className="space-y-4">
+          {savedWords.map((word) => {
+            const isAlreadyLearned = learnedWords.some(
+              (lw) => lw.word.toLowerCase() === word.word.toLowerCase()
+            )
+            return (
+              <div key={word.id} className="space-y-3 rounded-md border p-4">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight">
+                    {word.word}
+                  </h2>
+                  <p className="font-mono text-xs italic opacity-70">
+                    {word.pronunciation}
+                  </p>
+                </div>
 
-        {savedWords.length === 0 ? (
-          <div className="border border-dashed rounded-md p-8 text-center space-y-3">
-            <HeartIcon size={32} weight="regular" className="mx-auto opacity-50" />
-            <p className="text-sm font-medium">Your saved library is empty</p>
-            <p className="text-xs opacity-60 max-w-xs mx-auto">
-              Save new words from the Home page as you encounter them to review them later here.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {savedWords.map((word) => {
-              const isAlreadyLearned = learnedWords.some((lw) => lw.word.toLowerCase() === word.word.toLowerCase())
-              return (
-                <div key={word.id} className="border rounded-md p-4 space-y-3">
-                  <div>
-                    <h2 className="text-xl font-bold tracking-tight">{word.word}</h2>
-                    <p className="text-xs italic opacity-70 font-mono">{word.pronunciation}</p>
+                <p className="text-sm">{word.definition}</p>
+
+                {word.examples.length > 0 && (
+                  <div className="space-y-1 text-xs opacity-85">
+                    <span className="block text-[9px] font-semibold tracking-wider uppercase opacity-60">
+                      Examples
+                    </span>
+                    <ul className="list-disc space-y-0.5 pl-4">
+                      {word.examples.map((ex, idx) => (
+                        <li key={idx}>
+                          <q>{ex}</q>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  
-                  <p className="text-sm">{word.definition}</p>
+                )}
 
-                  {word.examples && word.examples.length > 0 && (
-                    <div className="text-xs opacity-85 space-y-1">
-                      <span className="font-semibold opacity-60 uppercase tracking-wider block text-[9px]">Examples</span>
-                      <ul className="list-disc pl-4 space-y-0.5">
-                        {word.examples.map((ex, idx) => (
-                          <li key={idx}>"{ex}"</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="pt-2 border-t flex justify-end">
+                <div className="flex justify-end border-t pt-2">
+                  <form action={learnWordAction}>
+                    <input type="hidden" name="wordId" value={word.wordId} />
                     <Button
                       variant={isAlreadyLearned ? "outline" : "default"}
                       size="sm"
-                      onClick={() => handleLearn(word.wordId)}
-                      disabled={isAlreadyLearned || learnMutation.isPending}
+                      type="submit"
                       className="gap-1.5"
+                      disabled={isAlreadyLearned}
                     >
-                      <CheckCircleIcon size={16} weight={isAlreadyLearned ? "fill" : "regular"} />
+                      <CheckCircleIcon
+                        size={16}
+                        weight={isAlreadyLearned ? "fill" : "regular"}
+                      />
                       {isAlreadyLearned ? "Learned" : "Mark as Learned"}
                     </Button>
-                  </div>
+                  </form>
                 </div>
-              )
-            })}
-          </div>
-        )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

@@ -1,13 +1,9 @@
-"use client"
+import Image from "next/image"
 
 import { Button } from "@workspace/ui/components/button"
-import { useAuthLogin } from "../hooks/use-auth-login"
-import Image from "next/image"
-import { SpinnerGapIcon } from "@phosphor-icons/react"
+import { login } from "./actions"
 
-export default function LoginPage() {
-  const { mutate: googleLogin, isPending } = useAuthLogin()
-
+export default async function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-8 text-center">
@@ -18,28 +14,22 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <Button
-          size="lg"
-          onClick={() => googleLogin()}
-          disabled={isPending}
-          className="w-full"
-        >
-          Sign in with Google{" "}
-          {isPending ? (
-            <SpinnerGapIcon />
-          ) : (
+        <form action={login} className="space-y-4">
+          <Button size="lg" type="submit" className="w-full">
+            Sign in with Google
             <Image
-              src={"/assets/logos/google-g.png"}
+              src="/assets/logos/google-g.png"
               alt="Google Logo"
               width={16}
               height={16}
+              className="ml-2"
             />
-          )}
-        </Button>
+          </Button>
+        </form>
 
         <p className="text-xs text-neutral-500 dark:text-neutral-500">
-          Don't have an account yet? No problem! We'll create one for you during
-          sign-in.
+          Don&apos;t have an account yet? No problem! We&apos;ll create one for
+          you during sign-in.
         </p>
       </div>
     </div>
