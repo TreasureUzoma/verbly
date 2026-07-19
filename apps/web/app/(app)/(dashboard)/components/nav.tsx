@@ -2,7 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { HouseIcon, UserIcon, HeartIcon } from "@phosphor-icons/react"
+import {
+  HouseIcon,
+  UserIcon,
+  HeartIcon,
+  SparkleIcon,
+} from "@phosphor-icons/react"
 
 export function DashboardNav() {
   const pathname = usePathname()
@@ -12,6 +17,11 @@ export function DashboardNav() {
       label: "Learn",
       icon: HouseIcon,
       href: "/home",
+    },
+    {
+      label: "Coach",
+      icon: SparkleIcon,
+      href: "/coach",
     },
     {
       label: "Saved",

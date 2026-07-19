@@ -108,7 +108,7 @@ export default async function HomePage() {
 
         <div className="space-y-4 rounded-md border p-4">
           <div>
-            <span className="text-[10px] font-bold tracking-wider uppercase opacity-60">
+            <span className="block text-[10px] font-medium uppercase opacity-60">
               Word of the Day
             </span>
             {todayWord ? (
@@ -123,7 +123,7 @@ export default async function HomePage() {
                 <p className="text-base">{todayWord.definition}</p>
                 {todayWord.examples?.length > 0 && (
                   <div className="mt-4 space-y-2">
-                    <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
+                    <span className="block text-[10px] font-medium uppercase opacity-60">
                       Example Sentences
                     </span>
                     <ul className="list-disc space-y-1 pl-4 text-sm">

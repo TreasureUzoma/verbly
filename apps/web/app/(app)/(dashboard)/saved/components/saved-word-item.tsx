@@ -47,7 +47,7 @@ export function SavedWordItem({ word, isAlreadyLearned }: SavedWordItemProps) {
 
       {word.examples.length > 0 && (
         <div className="space-y-1 text-xs opacity-85">
-          <span className="block text-[9px] font-semibold tracking-wider uppercase opacity-60">
+          <span className="block text-[9px] uppercase opacity-60">
             Examples
           </span>
           <ul className="list-disc space-y-0.5 pl-4">

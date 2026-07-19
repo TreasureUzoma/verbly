@@ -53,7 +53,7 @@ export default async function ProfilePage() {
           </h2>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-md border p-3 text-center">
-              <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
+              <span className="block text-[10px] font-medium uppercase opacity-60">
                 Current Streak
               </span>
               <div className="mt-1.5 flex items-center justify-center gap-1">
@@ -68,7 +68,7 @@ export default async function ProfilePage() {
               </div>
             </div>
             <div className="rounded-md border p-3 text-center">
-              <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
+              <span className="block text-[10px] font-medium uppercase opacity-60">
                 Longest Streak
               </span>
               <div className="mt-1.5 flex items-center justify-center gap-1">
@@ -86,7 +86,7 @@ export default async function ProfilePage() {
 
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-md border p-3 text-center">
-              <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
+              <span className="block text-[10px] font-medium uppercase opacity-60">
                 Days Done
               </span>
               <span className="mt-1 block text-lg font-bold">
@@ -94,7 +94,7 @@ export default async function ProfilePage() {
               </span>
             </div>
             <div className="rounded-md border p-3 text-center">
-              <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
+              <span className="block text-[10px] font-medium uppercase opacity-60">
                 Saved
               </span>
               <span className="mt-1 block text-lg font-bold">
@@ -102,7 +102,7 @@ export default async function ProfilePage() {
               </span>
             </div>
             <div className="rounded-md border p-3 text-center">
-              <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
+              <span className="block text-[10px] font-medium uppercase opacity-60">
                 Learned
               </span>
               <span className="mt-1 block text-lg font-bold">
