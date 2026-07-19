@@ -38,21 +38,13 @@ app.get("/", (c) => {
 
 const api = new Hono<AppBindings>().basePath("/api/v1")
 
-app.use(
+api.use(
   "*",
   cors({
-    origin: (origin) => origin,
+    origin: env.WEB_URL,
     credentials: true,
   })
 )
-
-app.use("/*", async (c, next) => {
-  await next()
-  c.header(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate"
-  )
-})
 
 api.route("/auth", authRoute)
 
