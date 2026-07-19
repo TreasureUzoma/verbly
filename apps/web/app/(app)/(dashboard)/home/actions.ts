@@ -1,27 +1,44 @@
 "use server"
 
 import { api } from "@/lib/api/api"
-import { redirect } from "next/navigation"
 
 export async function completeTodayAction() {
-  await api.post("/words/today/complete", {})
-  redirect("/home")
+  try {
+    await api.post("/words/today/complete", {})
+    return { success: true }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    const message = err?.message || "Failed to complete today's word"
+    return { success: false, error: message }
+  }
 }
 
 export async function saveWordAction(formData: FormData) {
-  const wordId = formData.get("wordId")
-  if (!wordId) {
-    redirect("/home")
+  try {
+    const wordId = formData.get("wordId")
+    if (!wordId) {
+      return { success: false, error: "Word ID is missing" }
+    }
+    await api.post("/words/save", { wordId: Number(wordId) })
+    return { success: true }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    const message = err?.message || "Failed to save word"
+    return { success: false, error: message }
   }
-  await api.post("/words/save", { wordId: Number(wordId) })
-  redirect("/home")
 }
 
 export async function learnWordAction(formData: FormData) {
-  const wordId = formData.get("wordId")
-  if (!wordId) {
-    redirect("/home")
+  try {
+    const wordId = formData.get("wordId")
+    if (!wordId) {
+      return { success: false, error: "Word ID is missing" }
+    }
+    await api.post("/words/learn", { wordId: Number(wordId) })
+    return { success: true }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    const message = err?.message || "Failed to mark as learned"
+    return { success: false, error: message }
   }
-  await api.post("/words/learn", { wordId: Number(wordId) })
-  redirect("/home")
 }

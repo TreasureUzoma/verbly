@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation"
 import { api } from "@/lib/api/api"
-import { Button } from "@workspace/ui/components/button"
 import {
   CheckCircleIcon,
   FlameIcon,
   HeartIcon,
 } from "@phosphor-icons/react/dist/ssr"
-import { completeTodayAction, learnWordAction, saveWordAction } from "./actions"
+import { WordActions } from "./components/word-actions"
 
 interface Word {
   id: number
@@ -189,42 +188,12 @@ export default async function HomePage() {
           </div>
 
           {todayWord && (
-            <div className="flex flex-col gap-2 pt-2">
-              <form action={completeTodayAction} className="w-full">
-                <Button
-                  variant={isTodayCompleted ? "outline" : "default"}
-                  className="w-full"
-                  type="submit"
-                >
-                  {isTodayCompleted ? "✓ Completed Today" : "Mark as Completed"}
-                </Button>
-              </form>
-
-              <div className="grid grid-cols-2 gap-2">
-                <form action={saveWordAction}>
-                  <input type="hidden" name="wordId" value={todayWord.id} />
-                  <Button
-                    variant="outline"
-                    type="submit"
-                    className="w-full"
-                    disabled={isTodaySaved}
-                  >
-                    {isTodaySaved ? "♥ Saved" : "Save for Later"}
-                  </Button>
-                </form>
-                <form action={learnWordAction}>
-                  <input type="hidden" name="wordId" value={todayWord.id} />
-                  <Button
-                    variant="outline"
-                    type="submit"
-                    className="w-full"
-                    disabled={isTodayLearned}
-                  >
-                    {isTodayLearned ? "✓ Learned" : "Mark as Learned"}
-                  </Button>
-                </form>
-              </div>
-            </div>
+            <WordActions
+              wordId={todayWord.id}
+              isTodayCompleted={isTodayCompleted}
+              isTodaySaved={isTodaySaved}
+              isTodayLearned={isTodayLearned}
+            />
           )}
         </div>
       </div>

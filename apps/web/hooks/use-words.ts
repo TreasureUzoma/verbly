@@ -1,6 +1,7 @@
 import { fetcher } from "@/lib/api/client"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export interface Word {
   id: number
@@ -88,8 +89,13 @@ export const useCompleteTodaysWord = () => {
       return response.data
     },
     onSuccess: () => {
+      toast.success("Word marked as completed!")
       queryClient.invalidateQueries({ queryKey: ["today-word"] })
       queryClient.invalidateQueries({ queryKey: ["profile"] })
+    },
+    onError: (error: any) => {
+      const message = error?.message || "Failed to complete word"
+      toast.error(message)
     },
   })
 }
@@ -103,9 +109,14 @@ export const useSaveWord = () => {
       return response.data
     },
     onSuccess: () => {
+      toast.success("Word saved successfully!")
       queryClient.invalidateQueries({ queryKey: ["saved-words"] })
       queryClient.invalidateQueries({ queryKey: ["today-word"] })
       queryClient.invalidateQueries({ queryKey: ["profile"] })
+    },
+    onError: (error: any) => {
+      const message = error?.message || "Failed to save word"
+      toast.error(message)
     },
   })
 }
@@ -130,10 +141,15 @@ export const useLearnWord = () => {
       return response.data
     },
     onSuccess: () => {
+      toast.success("Word marked as learned!")
       queryClient.invalidateQueries({ queryKey: ["learned-words"] })
       queryClient.invalidateQueries({ queryKey: ["saved-words"] })
       queryClient.invalidateQueries({ queryKey: ["today-word"] })
       queryClient.invalidateQueries({ queryKey: ["profile"] })
+    },
+    onError: (error: any) => {
+      const message = error?.message || "Failed to mark word as learned"
+      toast.error(message)
     },
   })
 }
@@ -169,8 +185,13 @@ export const useLogout = () => {
       await fetcher.post("/auth/logout")
     },
     onSuccess: () => {
+      toast.success("Logged out successfully")
       queryClient.clear()
       router.push("/auth")
+    },
+    onError: (error: any) => {
+      const message = error?.message || "Failed to logout"
+      toast.error(message)
     },
   })
 }

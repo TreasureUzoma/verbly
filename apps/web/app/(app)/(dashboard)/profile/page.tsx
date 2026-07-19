@@ -8,7 +8,7 @@ import {
   UserIcon,
   CalendarIcon,
 } from "@phosphor-icons/react/dist/ssr"
-import { logoutAction } from "./actions"
+import { LogoutButton } from "./components/logout-button"
 
 interface SessionData {
   name: string
@@ -72,17 +72,7 @@ export default async function ProfilePage() {
               <p className="text-xs opacity-70">{user.email}</p>
             </div>
           </div>
-          <form action={logoutAction}>
-            <Button
-              variant="outline"
-              size="sm"
-              type="submit"
-              className="gap-1.5"
-            >
-              <SignOutIcon size={16} />
-              Sign Out
-            </Button>
-          </form>
+          <LogoutButton />
         </div>
 
         <div className="space-y-3">
