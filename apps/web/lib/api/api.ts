@@ -27,13 +27,18 @@ export async function api<T>(
   }
 
   const cookieStore = await cookies()
-  const forwardedCookies = cookieStore.toString()
+
+  // 1. Pull current local tokens out of the Next.js cookie jar
+  const accessToken = cookieStore.get("verblyAccessToken")?.value || ""
+  const refreshToken = cookieStore.get("verblyRefreshToken")?.value || ""
 
   const config: RequestInit = {
     ...rest,
     headers: {
       "Content-Type": "application/json",
-      Cookie: forwardedCookies,
+      // Forward tokens upstream to Hono via headers
+      "x-access-token": accessToken,
+      "x-refresh-token": refreshToken,
       ...headers,
     },
     body: json ? JSON.stringify(json) : rest.body,
@@ -54,23 +59,26 @@ export async function api<T>(
     throw new Error(data.message || `API Error: ${response.status}`)
   }
 
-  const setCookieHeader = response.headers.get("set-cookie")
-  if (setCookieHeader) {
-    const cookiesArray = setCookieHeader.split(/,(?=[^;]+?=)/)
-    cookiesArray.forEach((cookieString) => {
-      const [attributes] = cookieString.split(";")
-      if (!attributes) return
-      const [name, ...valueParts] = attributes.split("=")
-      const value = valueParts.join("=")
+  // 2. Intercept custom token headers sent from Hono
+  const incomingAccess = response.headers.get("x-access-token")
+  const incomingRefresh = response.headers.get("x-refresh-token")
 
-      if (name && value) {
-        cookieStore.set(name.trim(), value, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          path: "/",
-          sameSite: "lax",
-        })
-      }
+  // 3. Commit them directly to the local browser context via Next.js
+  if (incomingAccess) {
+    cookieStore.set("verblyAccessToken", incomingAccess, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      sameSite: "lax",
+    })
+  }
+
+  if (incomingRefresh) {
+    cookieStore.set("verblyRefreshToken", incomingRefresh, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      sameSite: "lax",
     })
   }
 

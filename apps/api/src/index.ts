@@ -42,6 +42,7 @@ api.use(
   "*",
   cors({
     origin: env.WEB_URL,
+    exposeHeaders: ["x-access-token", "x-refresh-token"],
     credentials: true,
   })
 )

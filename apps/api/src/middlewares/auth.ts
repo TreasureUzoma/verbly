@@ -8,7 +8,6 @@ import { env } from "../env.js"
 import {
   FIFTEEN_MINUTES_SECONDS,
   generateTokens,
-  setAuthCookies,
   SEVEN_DAYS_SECONDS,
 } from "../utils/auth-tokens.js"
 
@@ -82,7 +81,9 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
 
     const { accessToken: newAccess, refreshToken: newRefresh } =
       await generateTokens(user.id, user.email, user.name)
-    await setAuthCookies(c, newAccess, newRefresh)
+
+    c.header("x-access-token", newAccess)
+    c.header("x-refresh-token", newRefresh)
 
     c.set("user", {
       id: user.id,

@@ -1,11 +1,7 @@
 import { Hono } from "hono"
 import type { AuthType, AppBindings, ServiceResponse } from "../../types.js"
 import type { Context } from "hono"
-import {
-  generateTokens,
-  setAuthCookies,
-  clearAuthCookies,
-} from "../../utils/auth-tokens.js"
+import { generateTokens } from "../../utils/auth-tokens.js"
 import { createOauthUser, getGoogleAuthUrl } from "../../services/auth.js"
 import { env } from "../../env.js"
 
@@ -40,7 +36,8 @@ const handleAuth = async (
     serviceData.data.subscriptionType ?? undefined
   )
 
-  await setAuthCookies(c, accessToken, refreshToken)
+  c.header("x-access-token", accessToken)
+  c.header("x-refresh-token", refreshToken)
 
   return c.json(
     {
@@ -74,7 +71,8 @@ authRoute.get("/google/callback", async (c) => {
       name || "-",
       undefined
     )
-    await setAuthCookies(c, accessToken, refreshToken)
+    c.header("x-access-token", accessToken)
+    c.header("x-refresh-token", refreshToken)
     return c.redirect(`${env.WEB_URL}/home`, 302)
   }
 
@@ -82,7 +80,8 @@ authRoute.get("/google/callback", async (c) => {
 })
 
 authRoute.post("/logout", async (c) => {
-  await clearAuthCookies(c)
+  c.header("x-access-token", "")
+  c.header("x-refresh-token", "")
   return c.json({
     success: true,
     message: "Logged out successfully",
