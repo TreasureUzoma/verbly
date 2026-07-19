@@ -39,7 +39,7 @@ app.get("/", (c) => {
 const api = new Hono<AppBindings>().basePath("/api/v1")
 
 app.use(
-  "/api/*",
+  "*",
   cors({
     origin: (origin) => origin,
     credentials: true,
