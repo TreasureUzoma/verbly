@@ -46,6 +46,14 @@ app.use(
   })
 )
 
+app.use("/*", async (c, next) => {
+  await next()
+  c.header(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  )
+})
+
 api.route("/auth", authRoute)
 
 // requires auth sessions
