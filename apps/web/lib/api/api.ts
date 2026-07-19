@@ -28,7 +28,6 @@ export async function api<T>(
 
   const cookieStore = await cookies()
 
-  // 1. Pull current local tokens out of the Next.js cookie jar
   const accessToken = cookieStore.get("verblyAccessToken")?.value || ""
   const refreshToken = cookieStore.get("verblyRefreshToken")?.value || ""
 
@@ -50,31 +49,24 @@ export async function api<T>(
 
   const response = await fetch(url.toString(), config)
 
-  // --- START DEBUG LOGGING ---
-  console.log("=== Hono to Next.js Hand-off ===")
-  console.log("Status:", response.status)
-
-  // Convert headers iterator to a readable object to see everything Hono sent
-  const allHeaders = Object.fromEntries(response.headers.entries())
-  console.log("All incoming headers from Hono:", allHeaders)
-
   const incomingAccess = response.headers.get("x-access-token")
-  console.log("Extracted Access Token:", incomingAccess ? "FOUND" : "MISSING")
-  // --- END DEBUG LOGGING ---
+  if (response.status === 204) return {} as T
 
-  if (response.status === 204) return { data: {} } as T
+  const rawBody = await response.json().catch(() => ({}))
+  const responseBody =
+    rawBody && typeof rawBody === "object" && "data" in rawBody
+      ? (rawBody as any).data
+      : rawBody
 
-  const data = await response.json().catch(() => ({}))
+  console.log("response body:", responseBody)
 
   if (!response.ok) {
-    console.log(data)
-    throw new Error(data.message || `API Error: ${response.status}`)
+    console.log(rawBody)
+    throw new Error(rawBody.message || `API Error: ${response.status}`)
   }
 
-  // 2. Intercept custom token headers sent from Hono
   const incomingRefresh = response.headers.get("x-refresh-token")
 
-  // 3. Commit them directly to the local browser context via Next.js
   if (incomingAccess) {
     cookieStore.set("verblyAccessToken", incomingAccess, {
       httpOnly: true,
@@ -93,7 +85,7 @@ export async function api<T>(
     })
   }
 
-  return data as T
+  return responseBody as T
 }
 
 api.get = <T>(url: string, opts?: NextFetchOptions) =>

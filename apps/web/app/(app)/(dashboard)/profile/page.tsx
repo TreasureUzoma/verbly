@@ -53,13 +53,11 @@ export default async function ProfilePage() {
       },
     })),
     api
-      .get<{
-        data: LearnedWord[]
-      }>("/words/learned", { tags: ["learned-words"] })
-      .catch(() => ({ data: [] })),
+      .get<LearnedWord[]>("/words/learned", { tags: ["learned-words"] })
+      .catch(() => []),
   ])
 
-  const learnedWords = learnedWordsResponse.data ?? []
+  const learnedWords = learnedWordsResponse ?? []
 
   return (
     <div className="pb-24">

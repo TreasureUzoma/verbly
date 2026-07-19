@@ -6,9 +6,10 @@ import {
   userDailyCompletions,
   learnedWords,
 } from "../db/schema.js"
+import { generateDailyWord } from "./ai.js"
 
 export class WordsService {
-  // Get today's word
+  // Get today's word, generating it automatically if missing
   static async getTodaysWord() {
     const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD format
 
@@ -18,7 +19,43 @@ export class WordsService {
       .where(eq(dailyWords.date, today))
       .limit(1)
 
-    return todaysWord[0] || null
+    if (todaysWord.length > 0) {
+      return todaysWord[0]
+    }
+
+    return await this.createTodaysWord(today)
+  }
+
+  static async createTodaysWord(date: string) {
+    const generated = await generateDailyWord(date)
+
+    try {
+      const [newWord] = await db
+        .insert(dailyWords)
+        .values({
+          word: generated.word,
+          definition: generated.definition,
+          pronunciation: generated.pronunciation,
+          examples: JSON.stringify(generated.examples),
+          date,
+        })
+        .returning()
+
+      return newWord
+    } catch (error) {
+      // If another request created today's word concurrently, return the existing one.
+      const existingWord = await db
+        .select()
+        .from(dailyWords)
+        .where(eq(dailyWords.date, date))
+        .limit(1)
+
+      if (existingWord.length > 0) {
+        return existingWord[0]
+      }
+
+      throw error
+    }
   }
 
   // Get all daily words (admin function)

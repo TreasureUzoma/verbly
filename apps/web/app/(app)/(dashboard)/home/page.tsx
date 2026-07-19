@@ -6,6 +6,7 @@ import {
   FlameIcon,
   HeartIcon,
 } from "@phosphor-icons/react/dist/ssr"
+import { completeTodayAction, learnWordAction, saveWordAction } from "./actions"
 
 interface Word {
   id: number
@@ -41,29 +42,6 @@ interface SessionData {
   name: string
 }
 
-async function completeTodayAction() {
-  await api.post("/words/today/complete", {})
-  redirect("/home")
-}
-
-async function saveWordAction(formData: FormData) {
-  const wordId = formData.get("wordId")
-  if (!wordId) {
-    redirect("/home")
-  }
-  await api.post("/words/save", { wordId: Number(wordId) })
-  redirect("/home")
-}
-
-async function learnWordAction(formData: FormData) {
-  const wordId = formData.get("wordId")
-  if (!wordId) {
-    redirect("/home")
-  }
-  await api.post("/words/learn", { wordId: Number(wordId) })
-  redirect("/home")
-}
-
 export default async function HomePage() {
   let user: SessionData
   try {
@@ -85,20 +63,18 @@ export default async function HomePage() {
           throw error
         }),
       api
-        .get<{ data: SavedWord[] }>("/words/saved", { tags: ["saved-words"] })
-        .catch(() => ({ data: [] })),
+        .get<SavedWord[]>("/words/saved", { tags: ["saved-words"] })
+        .catch(() => []),
       api
-        .get<{
-          data: LearnedWord[]
-        }>("/words/learned", { tags: ["learned-words"] })
-        .catch(() => ({ data: [] })),
+        .get<LearnedWord[]>("/words/learned", { tags: ["learned-words"] })
+        .catch(() => []),
       api.get<ProfileData>("/profile", { tags: ["profile"] }).catch(() => ({
         streak: { currentStreak: 0, longestStreak: 0, completedToday: false },
       })),
     ])
 
-  const savedWords = savedWordsResponse.data ?? []
-  const learnedWords = learnedWordsResponse.data ?? []
+  const savedWords = savedWordsResponse ?? []
+  const learnedWords = learnedWordsResponse ?? []
 
   const isTodayCompleted =
     todayWord?.completed || profile?.streak?.completedToday
@@ -190,13 +166,13 @@ export default async function HomePage() {
                 </p>
                 <div className="my-3 border-t" />
                 <p className="text-base">{todayWord.definition}</p>
-                {todayWord.examples.length > 0 && (
+                {todayWord.examples?.length > 0 && (
                   <div className="mt-4 space-y-2">
                     <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
                       Example Sentences
                     </span>
                     <ul className="list-disc space-y-1 pl-4 text-sm">
-                      {todayWord.examples.map((example, idx) => (
+                      {todayWord.examples?.map((example, idx) => (
                         <li key={idx} className="opacity-90">
                           {example}
                         </li>
