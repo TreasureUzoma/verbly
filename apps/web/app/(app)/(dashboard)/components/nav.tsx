@@ -20,11 +20,6 @@ export function DashboardNav() {
       href: "/home",
     },
     {
-      label: "Coach",
-      icon: SparkleIcon,
-      href: "/coach",
-    },
-    {
       label: "Saved",
       icon: HeartIcon,
       href: "/saved",
@@ -37,7 +32,7 @@ export function DashboardNav() {
   ]
 
   return (
-    <nav className="fixed right-0 bottom-0 left-0 border-t border-neutral-600">
+    <nav className="fixed right-0 bottom-0 left-0 border-t bg-background">
       <div className="flex h-20 items-center justify-around px-4">
         {navItems.map((item) => {
           const Icon = item.icon
