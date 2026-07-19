@@ -7,14 +7,19 @@ export async function GET(req: NextRequest) {
   const code = searchParams.get("code")
 
   if (!code) {
-    redirect("/login?error=missing_code")
+    return redirect("/login?error=missing_code")
   }
 
   try {
     await api.post("/auth/google/callback", { code })
-    redirect("/home")
   } catch (error) {
     console.error("OAuth exchange failed:", error)
-    redirect("/login?error=auth_failed")
+    const message = error instanceof Error ? error.message : String(error)
+    console.error("OAuth exchange error details:", message)
+    return redirect(
+      `/auth?error=auth_failed&reason=${encodeURIComponent(message)}`
+    )
   }
+
+  redirect("/home")
 }

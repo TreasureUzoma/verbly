@@ -11,6 +11,19 @@ authRoute.post("/google/url", (c) => {
   return c.json({ url: getGoogleAuthUrl() }, 200)
 })
 
+authRoute.get("/google/callback", (c) => {
+  const code = c.req.query("code")
+
+  if (!code) {
+    return c.redirect(`${env.WEB_URL}/login?error=missing_code`, 302)
+  }
+
+  return c.redirect(
+    `${env.WEB_URL}/auth/callback?code=${encodeURIComponent(code)}`,
+    302
+  )
+})
+
 authRoute.post("/google/callback", async (c) => {
   const body = await c.req.json()
   const code = body.code
