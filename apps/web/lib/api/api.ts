@@ -50,6 +50,18 @@ export async function api<T>(
 
   const response = await fetch(url.toString(), config)
 
+  // --- START DEBUG LOGGING ---
+  console.log("=== Hono to Next.js Hand-off ===")
+  console.log("Status:", response.status)
+
+  // Convert headers iterator to a readable object to see everything Hono sent
+  const allHeaders = Object.fromEntries(response.headers.entries())
+  console.log("All incoming headers from Hono:", allHeaders)
+
+  const incomingAccess = response.headers.get("x-access-token")
+  console.log("Extracted Access Token:", incomingAccess ? "FOUND" : "MISSING")
+  // --- END DEBUG LOGGING ---
+
   if (response.status === 204) return { data: {} } as T
 
   const data = await response.json().catch(() => ({}))
@@ -60,7 +72,6 @@ export async function api<T>(
   }
 
   // 2. Intercept custom token headers sent from Hono
-  const incomingAccess = response.headers.get("x-access-token")
   const incomingRefresh = response.headers.get("x-refresh-token")
 
   // 3. Commit them directly to the local browser context via Next.js

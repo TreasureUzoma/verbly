@@ -4,7 +4,7 @@ import { users } from "../db/schema.js"
 import { env } from "../env.js"
 import { google } from "googleapis"
 
-const GOOGLE_REDIRECT_URI = `${env.APP_URL}/api/v1/auth/google/callback`
+const GOOGLE_REDIRECT_URI = `${env.WEB_URL}/auth/callback`
 
 const oauth2Client = new google.auth.OAuth2(
   env.GOOGLE_CLIENT_ID,

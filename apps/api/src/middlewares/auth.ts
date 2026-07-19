@@ -23,11 +23,7 @@ type AuthEnv = {
 
 export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
   try {
-    const accessToken = await getSignedCookie(
-      c,
-      env.JWT_ACCESS_SECRET,
-      "verblyAccessToken"
-    )
+    const accessToken = c.req.header("x-access-token")
 
     if (accessToken) {
       try {
@@ -46,11 +42,8 @@ export const withAuth: MiddlewareHandler<AuthEnv> = async (c, next) => {
       } catch {}
     }
 
-    const refreshToken = await getSignedCookie(
-      c,
-      env.JWT_REFRESH_SECRET,
-      "verblyRefreshToken"
-    )
+    const refreshToken = c.req.header("x-refresh-token")
+
     if (!refreshToken) {
       return c.json({ message: "Unauthorized", success: false }, 401)
     }
