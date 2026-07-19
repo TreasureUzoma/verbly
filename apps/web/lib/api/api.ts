@@ -99,4 +99,6 @@ api.put = <T>(url: string, body: any, opts?: NextFetchOptions) =>
 api.delete = <T>(url: string, opts?: NextFetchOptions) =>
   api<T>(url, { ...opts, method: "DELETE" })
 
-export const invalidate = (tag: string) => (revalidateTag as any)(tag)
+export const invalidate = (...tags: string[]) => {
+  tags.forEach((tag) => revalidateTag(tag, "max"))
+}

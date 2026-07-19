@@ -1,6 +1,7 @@
 import { api } from "@/lib/api/api"
 import { HeartIcon } from "@phosphor-icons/react/dist/ssr"
 import { SavedWordItem } from "./components/saved-word-item"
+import { LearnedWord } from "@/types/word"
 
 interface SavedWord {
   id: number
@@ -9,10 +10,6 @@ interface SavedWord {
   pronunciation: string
   definition: string
   examples: string[]
-}
-
-interface LearnedWord {
-  word: string
 }
 
 export default async function SavedPage() {

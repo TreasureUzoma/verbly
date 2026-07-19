@@ -6,40 +6,10 @@ import {
   HeartIcon,
 } from "@phosphor-icons/react/dist/ssr"
 import { WordActions } from "./components/word-actions"
-
-interface Word {
-  id: number
-  word: string
-  definition: string
-  pronunciation: string
-  examples: string[]
-  completed: boolean
-  learned: boolean
-}
-
-interface SavedWord {
-  id: number
-  wordId: number
-  word: string
-}
-
-interface LearnedWord {
-  id: number
-  wordId: number
-  word: string
-}
-
-interface ProfileData {
-  streak: {
-    currentStreak: number
-    longestStreak: number
-    completedToday: boolean
-  }
-}
-
-interface SessionData {
-  name: string
-}
+import { Header } from "./components/header"
+import { ProfileData } from "@/types/profile"
+import { LearnedWord, SavedWord, Word } from "@/types/word"
+import { SessionData } from "@/types/auth"
 
 export default async function HomePage() {
   let user: SessionData
@@ -89,59 +59,45 @@ export default async function HomePage() {
       )
     : false
 
+  const stats = [
+    {
+      label: "Streak",
+      icon: FlameIcon,
+      iconColor: "text-orange-500",
+      value: profile?.streak?.currentStreak ?? 0,
+    },
+    {
+      label: "Saved",
+      icon: HeartIcon,
+      iconColor: "text-blue-500",
+      value: savedWords.length,
+    },
+    {
+      label: "Learned",
+      icon: CheckCircleIcon,
+      iconColor: "text-green-500",
+      value: learnedWords.length,
+    },
+  ]
+
   return (
     <div className="pb-24">
       <div className="space-y-6 p-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Hi {user.name}!</h1>
-          <p className="text-sm opacity-70">
-            Ready to learn your word for today?
-          </p>
-        </div>
+        <Header fullName={user.name} />
 
         <div className="divide-y divide-border rounded-md border">
-          <div className="grid grid-cols-3 divide-x divide-border">
-            <div className="p-3 text-center">
-              <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
-                Streak
-              </span>
-              <div className="mt-1 flex items-center justify-center gap-1">
-                <FlameIcon
-                  size={16}
-                  weight="fill"
-                  className="text-foreground"
-                />
-                <span className="text-lg font-bold">
-                  {profile?.streak?.currentStreak ?? 0}
+          <div className="grid grid-cols-3 divide-x divide-border py-3">
+            {stats.map(({ label, icon: Icon, iconColor, value }) => (
+              <div key={label} className="px-3 text-center">
+                <span className="block text-[10px] font-medium uppercase opacity-60">
+                  {label}
                 </span>
+                <div className="mt-1 flex items-center justify-center gap-1">
+                  <Icon size={18} weight="fill" className={iconColor} />
+                  <span className="text-3xl font-bold">{value}</span>
+                </div>
               </div>
-            </div>
-            <div className="p-3 text-center">
-              <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
-                Saved
-              </span>
-              <div className="mt-1 flex items-center justify-center gap-1">
-                <HeartIcon
-                  size={16}
-                  weight="fill"
-                  className="text-foreground"
-                />
-                <span className="text-lg font-bold">{savedWords.length}</span>
-              </div>
-            </div>
-            <div className="p-3 text-center">
-              <span className="block text-[10px] font-bold tracking-wider uppercase opacity-60">
-                Learned
-              </span>
-              <div className="mt-1 flex items-center justify-center gap-1">
-                <CheckCircleIcon
-                  size={16}
-                  weight="fill"
-                  className="text-foreground"
-                />
-                <span className="text-lg font-bold">{learnedWords.length}</span>
-              </div>
-            </div>
+            ))}
           </div>
           {profile?.streak?.longestStreak ? (
             <div className="px-4 py-2 text-center text-xs opacity-70">

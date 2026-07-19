@@ -1,39 +1,14 @@
 import { redirect } from "next/navigation"
 import { api } from "@/lib/api/api"
-import { Button } from "@workspace/ui/components/button"
 import {
-  SignOutIcon,
   FlameIcon,
   CheckCircleIcon,
-  UserIcon,
   CalendarIcon,
 } from "@phosphor-icons/react/dist/ssr"
 import { LogoutButton } from "./components/logout-button"
-
-interface SessionData {
-  name: string
-  email: string
-}
-
-interface ProfileData {
-  streak: {
-    currentStreak: number
-    longestStreak: number
-  }
-  learning: {
-    completedDaysCount: number
-    savedWordsCount: number
-    learnedWordsCount: number
-  }
-}
-
-interface LearnedWord {
-  id: number
-  word: string
-  pronunciation: string
-  definition: string
-  learnedAt: string
-}
+import { ProfileData } from "@/types/profile"
+import { LearnedWord } from "@/types/word"
+import { SessionData } from "@/types/auth"
 
 export default async function ProfilePage() {
   let user: SessionData
@@ -64,9 +39,6 @@ export default async function ProfilePage() {
       <div className="space-y-6 p-4">
         <div className="flex items-center justify-between rounded-md border p-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-full border bg-foreground/5 p-2.5">
-              <UserIcon size={24} weight="regular" />
-            </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">{user.name}</h1>
               <p className="text-xs opacity-70">{user.email}</p>
@@ -85,7 +57,11 @@ export default async function ProfilePage() {
                 Current Streak
               </span>
               <div className="mt-1.5 flex items-center justify-center gap-1">
-                <FlameIcon size={18} weight="fill" />
+                <FlameIcon
+                  size={18}
+                  weight="fill"
+                  className="text-orange-500"
+                />
                 <span className="text-xl font-bold">
                   {profile?.streak?.currentStreak ?? 0} days
                 </span>
@@ -96,7 +72,11 @@ export default async function ProfilePage() {
                 Longest Streak
               </span>
               <div className="mt-1.5 flex items-center justify-center gap-1">
-                <FlameIcon size={18} weight="regular" />
+                <FlameIcon
+                  size={18}
+                  weight="regular"
+                  className="text-orange-500"
+                />
                 <span className="text-xl font-bold">
                   {profile?.streak?.longestStreak ?? 0} days
                 </span>

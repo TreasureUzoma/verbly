@@ -1,10 +1,11 @@
 "use server"
 
-import { api } from "@/lib/api/api"
+import { api, invalidate } from "@/lib/api/api"
 
 export async function completeTodayAction() {
   try {
     await api.post("/words/today/complete", {})
+    invalidate("profile")
     return { success: true }
   } catch (error: unknown) {
     const err = error as { message?: string }
@@ -20,6 +21,7 @@ export async function saveWordAction(formData: FormData) {
       return { success: false, error: "Word ID is missing" }
     }
     await api.post("/words/save", { wordId: Number(wordId) })
+    invalidate("saved-words")
     return { success: true }
   } catch (error: unknown) {
     const err = error as { message?: string }
@@ -35,6 +37,7 @@ export async function learnWordAction(formData: FormData) {
       return { success: false, error: "Word ID is missing" }
     }
     await api.post("/words/learn", { wordId: Number(wordId) })
+    invalidate("learned-words")
     return { success: true }
   } catch (error: unknown) {
     const err = error as { message?: string }

@@ -8,6 +8,13 @@ import {
   saveWordAction,
   learnWordAction,
 } from "../actions"
+import {
+  CheckCircleIcon,
+  CheckIcon,
+  CircleWavyCheckIcon,
+  HeartIcon,
+  SpinnerGapIcon,
+} from "@phosphor-icons/react"
 
 interface WordActionsProps {
   wordId: number
@@ -71,11 +78,25 @@ export function WordActions({
         variant={isTodayCompleted ? "outline" : "default"}
         className="w-full"
       >
-        {completeLoading
-          ? "Loading..."
-          : isTodayCompleted
-            ? "✓ Completed Today"
-            : "Mark as Completed"}
+        {completeLoading ? (
+          <>
+            <SpinnerGapIcon className="size-4 animate-spin" />
+            <span>Loading...</span>
+          </>
+        ) : isTodayCompleted ? (
+          <>
+            <CircleWavyCheckIcon
+              className="size-4 text-green-500"
+              weight="fill"
+            />
+            <span>Completed Today</span>
+          </>
+        ) : (
+          <>
+            <CheckIcon className="size-4" />
+            <span>Mark as Completed</span>
+          </>
+        )}
       </Button>
 
       <div className="grid grid-cols-2 gap-2">
@@ -85,11 +106,22 @@ export function WordActions({
           variant="outline"
           className="w-full"
         >
-          {saveLoading
-            ? "Loading..."
-            : isTodaySaved
-              ? "♥ Saved"
-              : "Save for Later"}
+          {saveLoading ? (
+            <>
+              <SpinnerGapIcon className="size-4 animate-spin" />
+              <span>Loading...</span>
+            </>
+          ) : isTodaySaved ? (
+            <>
+              <HeartIcon className="size-4 text-blue-500" weight="fill" />
+              <span>Saved</span>
+            </>
+          ) : (
+            <>
+              <HeartIcon className="size-4" />
+              <span>Save for Later</span>
+            </>
+          )}
         </Button>
         <Button
           onClick={handleLearn}
@@ -97,11 +129,25 @@ export function WordActions({
           variant="outline"
           className="w-full"
         >
-          {learnLoading
-            ? "Loading..."
-            : isTodayLearned
-              ? "✓ Learned"
-              : "Mark as Learned"}
+          {learnLoading ? (
+            <>
+              <SpinnerGapIcon className="size-4 animate-spin" />
+              <span>Loading...</span>
+            </>
+          ) : isTodayLearned ? (
+            <>
+              <CheckCircleIcon
+                className="size-4 text-green-500"
+                weight="fill"
+              />
+              <span>Learned</span>
+            </>
+          ) : (
+            <>
+              <CheckCircleIcon className="size-4" />
+              <span>Mark as Learned</span>
+            </>
+          )}
         </Button>
       </div>
     </div>
