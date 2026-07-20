@@ -1,10 +1,8 @@
 import { groq } from "@ai-sdk/groq"
 import { streamText, validateUIMessages } from "ai"
-import { and, asc, desc, eq, inArray, lt } from "drizzle-orm"
 import { Hono } from "hono"
 import { z } from "zod"
-import { db } from "../../db/index.js"
-import { coachConversations, coachMessages } from "../../db/schema.js"
+import { ChatService } from "../../services/chat.js"
 import type { AuthType, AppBindings } from "../../types.js"
 
 const chatRoute = new Hono<AppBindings>()
@@ -18,68 +16,17 @@ const createConversationSchema = z.object({
   title: z.string().trim().max(100).optional(),
 })
 
-const getConversation = async (conversationId: string, userId: string) => {
-  const [conversation] = await db
-    .select()
-    .from(coachConversations)
-    .where(
-      and(
-        eq(coachConversations.id, conversationId),
-        eq(coachConversations.userId, userId)
-      )
-    )
-    .limit(1)
-
-  return conversation
-}
-
 chatRoute.get("/conversations", async (c) => {
   const user = c.get("user") as AuthType
-  const limit = Math.min(Math.max(Number(c.req.query("limit")) || 20, 1), 50)
+  const limit = Number(c.req.query("limit")) || 20
   const cursor = c.req.query("cursor")
-  const conversations = await db
-    .select()
-    .from(coachConversations)
-    .where(
-      cursor
-        ? and(
-            eq(coachConversations.userId, user.id),
-            lt(coachConversations.updatedAt, new Date(cursor))
-          )
-        : eq(coachConversations.userId, user.id)
-    )
-    .orderBy(desc(coachConversations.updatedAt))
-    .limit(limit + 1)
 
-  const hasMore = conversations.length > limit
-  const page = conversations.slice(0, limit)
-
-  if (page.length === 0) {
-    return c.json({ success: true, data: { conversations: [], nextCursor: null } })
-  }
-
-  const messages = await db
-    .select()
-    .from(coachMessages)
-    .where(
-      inArray(
-        coachMessages.conversationId,
-        page.map((conversation) => conversation.id)
-      )
-    )
-    .orderBy(asc(coachMessages.id))
+  const { conversations, nextCursor } =
+    await ChatService.getUserConversationsWithMessages(user.id, limit, cursor)
 
   return c.json({
     success: true,
-    data: {
-      conversations: page.map((conversation) => ({
-        ...conversation,
-        messages: messages.filter(
-          (message) => message.conversationId === conversation.id
-        ),
-      })),
-      nextCursor: hasMore ? page.at(-1)?.updatedAt.toISOString() : null,
-    },
+    data: { conversations, nextCursor },
   })
 })
 
@@ -92,28 +39,63 @@ chatRoute.post("/conversations", async (c) => {
     return c.json({ message: "Invalid conversation." }, 400)
   }
 
-  const [conversation] = await db
-    .insert(coachConversations)
-    .values({
-      userId: user.id,
-      title: parsedRequest.data.title || "New conversation",
-    })
-    .returning()
+  const conversation = await ChatService.createConversation(
+    user.id,
+    parsedRequest.data.title
+  )
 
   return c.json({ success: true, data: conversation }, 201)
 })
 
+chatRoute.patch("/conversations/:id", async (c) => {
+  const user = c.get("user") as AuthType
+  const conversationId = c.req.param("id")
+  const requestBody = await c.req.json().catch(() => null)
+  const parsedRequest = z
+    .object({ title: z.string().trim().min(1).max(100) })
+    .safeParse(requestBody)
+
+  if (!parsedRequest.success) {
+    return c.json({ message: "Invalid title." }, 400)
+  }
+
+  const conversation = await ChatService.getConversation(
+    conversationId,
+    user.id
+  )
+  if (!conversation) {
+    return c.json({ message: "Conversation not found." }, 404)
+  }
+
+  const updated = await ChatService.updateConversation(conversationId, {
+    title: parsedRequest.data.title,
+  })
+
+  return c.json({ success: true, data: updated })
+})
+
+chatRoute.delete("/conversations/:id", async (c) => {
+  const user = c.get("user") as AuthType
+  const conversationId = c.req.param("id")
+
+  const deleted = await ChatService.deleteConversation(conversationId, user.id)
+  if (!deleted) {
+    return c.json({ message: "Conversation not found." }, 404)
+  }
+
+  return c.json({ success: true, data: deleted })
+})
+
 chatRoute.get("/conversations/:id", async (c) => {
   const user = c.get("user") as AuthType
-  const conversation = await getConversation(c.req.param("id"), user.id)
+  const conversation = await ChatService.getConversation(
+    c.req.param("id"),
+    user.id
+  )
 
   if (!conversation) return c.json({ message: "Conversation not found." }, 404)
 
-  const messages = await db
-    .select()
-    .from(coachMessages)
-    .where(eq(coachMessages.conversationId, conversation.id))
-    .orderBy(asc(coachMessages.id))
+  const messages = await ChatService.getConversationMessages(conversation.id)
 
   return c.json({ success: true, data: { conversation, messages } })
 })
@@ -142,24 +124,22 @@ chatRoute.post("/stream", async (c) => {
       return c.json({ message: "A chat message is required." }, 400)
     }
 
-    const conversation = await getConversation(
+    const conversation = await ChatService.getConversation(
       parsedRequest.data.threadId,
       user.id
     )
     if (!conversation)
       return c.json({ message: "Conversation not found." }, 404)
 
-    await db.insert(coachMessages).values({
-      conversationId: conversation.id,
-      role: "user",
-      content: latestText.text.trim(),
-    })
+    await ChatService.addMessage(
+      conversation.id,
+      "user",
+      latestText.text.trim()
+    )
 
-    const conversationMessages = await db
-      .select()
-      .from(coachMessages)
-      .where(eq(coachMessages.conversationId, conversation.id))
-      .orderBy(asc(coachMessages.id))
+    const conversationMessages = await ChatService.getConversationMessages(
+      conversation.id
+    )
 
     const result = streamText({
       model: groq("openai/gpt-oss-20b"),
@@ -172,21 +152,18 @@ chatRoute.post("/stream", async (c) => {
       onFinish: async ({ text }) => {
         if (!text.trim()) return
 
-        await db.insert(coachMessages).values({
-          conversationId: conversation.id,
-          role: "assistant",
-          content: text,
+        await ChatService.addMessage(conversation.id, "assistant", text)
+
+        // Generate title from first message if still default
+        const title =
+          conversation.title === "New conversation"
+            ? await ChatService.generateTitle(latestText.text.trim())
+            : conversation.title
+
+        await ChatService.updateConversation(conversation.id, {
+          title,
+          updatedAt: new Date(),
         })
-        await db
-          .update(coachConversations)
-          .set({
-            title:
-              conversation.title === "New conversation"
-                ? latestText.text.trim().slice(0, 100)
-                : conversation.title,
-            updatedAt: new Date(),
-          })
-          .where(eq(coachConversations.id, conversation.id))
       },
     })
 

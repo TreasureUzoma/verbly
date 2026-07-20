@@ -49,7 +49,9 @@ const getApiRequest = async (
   const incomingAccess = response.headers.get("x-access-token")
   const incomingRefresh = response.headers.get("x-refresh-token")
 
-  if (incomingAccess) {
+  // Always set cookies if they exist in response headers, even if empty
+  // This ensures cookies are properly invalidated when needed
+  if (incomingAccess !== null) {
     cookieStore.set("verblyAccessToken", incomingAccess, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -58,7 +60,7 @@ const getApiRequest = async (
     })
   }
 
-  if (incomingRefresh) {
+  if (incomingRefresh !== null) {
     cookieStore.set("verblyRefreshToken", incomingRefresh, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

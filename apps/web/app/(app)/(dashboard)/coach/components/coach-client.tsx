@@ -19,12 +19,14 @@ import {
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input"
 import { useChat } from "@ai-sdk/react"
-import { PlusIcon, SquareIcon } from "@phosphor-icons/react"
+import { ListIcon, PlusIcon, SquareIcon } from "@phosphor-icons/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { createCoachConversation } from "../actions"
+import { CoachSidebar } from "./coach-sidebar"
+import { Button } from "@workspace/ui/components/button"
 
 type StoredMessage = { id: number; role: "user" | "assistant"; content: string }
 type Thread = {
@@ -50,6 +52,7 @@ export const CoachPageClient = ({
   const [input, setInput] = useState("")
   const [threads, setThreads] = useState<Thread[]>(initialThreads)
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const starterHandled = useRef(false)
   const router = useRouter()
   const starter = useSearchParams().get("starter")?.trim()
@@ -80,6 +83,21 @@ export const CoachPageClient = ({
     if (!thread) return
     setActiveThreadId(threadId)
     setMessages(toUiMessages(thread.messages))
+    setIsSidebarOpen(false)
+  }
+
+  const handleThreadDeleted = (threadId: string) => {
+    setThreads((threads) => threads.filter((t) => t.id !== threadId))
+    if (activeThreadId === threadId) {
+      setActiveThreadId(null)
+      setMessages([])
+    }
+  }
+
+  const handleThreadUpdated = (threadId: string, title: string) => {
+    setThreads((threads) =>
+      threads.map((t) => (t.id === threadId ? { ...t, title } : t))
+    )
   }
 
   const send = async (text: string) => {
@@ -105,92 +123,110 @@ export const CoachPageClient = ({
   }, [router, starter])
 
   const isStreaming = status === "streaming" || status === "submitted"
+
   return (
-    <div className="mx-auto flex h-[calc(100dvh-8rem)] max-w-2xl flex-col px-4 pt-3 pb-2">
-      <div className="mb-3 flex shrink-0 items-center gap-2 overflow-x-auto pb-1">
-        <button
-          className="flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
-          onClick={() =>
-            createThread().catch((error) => toast.error(error.message))
-          }
-          type="button"
-        >
-          <PlusIcon className="size-4" />
-          New chat
-        </button>
-        <div className="flex items-center gap-2">
-          {threads.map((thread) => (
-            <button
-              className={`max-w-40 shrink-0 truncate rounded-md px-3 py-2 text-left text-sm ${activeThreadId === thread.id ? "bg-accent" : "bg-muted/60 hover:bg-accent/60"}`}
-              key={thread.id}
-              onClick={() => selectThread(thread.id)}
-              type="button"
-            >
-              {thread.title}
-            </button>
-          ))}
+    <div className="flex h-[calc(100dvh-4rem)] overflow-hidden">
+      {/* Sidebar */}
+      <CoachSidebar
+        threads={threads}
+        activeThreadId={activeThreadId}
+        onSelectThread={selectThread}
+        onThreadDeleted={handleThreadDeleted}
+        onThreadUpdated={handleThreadUpdated}
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
+
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col">
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
+          <Button
+            variant="outline"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title="Toggle sidebar"
+          >
+            <ListIcon className="size-5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() =>
+              createThread().catch((error) => toast.error(error.message))
+            }
+            type="button"
+          >
+            <PlusIcon className="size-4" />
+          </Button>
         </div>
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col">
-        <Conversation className="min-h-0 flex-1">
-          <ConversationContent>
-            {messages.length === 0 ? (
-              <ConversationEmptyState
-                icon={<SquareIcon className="size-12" />}
-                title="Start a conversation"
-                description="Ask Verbly Coach about vocabulary, grammar, or speaking practice."
+
+        {/* Chat Area */}
+        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-4">
+          <Conversation className="min-h-0 flex-1 pb-2">
+            <ConversationContent>
+              {messages.length === 0 ? (
+                <ConversationEmptyState
+                  icon={<SquareIcon className="size-12" />}
+                  title="Start a conversation"
+                  description="Ask Verbly Coach about vocabulary, grammar, or speaking practice."
+                />
+              ) : (
+                messages.map((message) => {
+                  const hasText = message.parts.some(
+                    (part) => part.type === "text" && part.text.trim()
+                  )
+                  return (
+                    <Message from={message.role} key={message.id}>
+                      <MessageContent>
+                        {message.parts.map((part, index) =>
+                          part.type === "text" ? (
+                            <MessageResponse key={`${message.id}-${index}`}>
+                              {part.text}
+                            </MessageResponse>
+                          ) : null
+                        )}
+                        {isStreaming &&
+                          message.role === "assistant" &&
+                          message.id === messages.at(-1)?.id &&
+                          !hasText && <MessageThinking />}
+                      </MessageContent>
+                    </Message>
+                  )
+                })
+              )}
+              {isStreaming && messages.at(-1)?.role === "user" && (
+                <Message from="assistant">
+                  <MessageContent>
+                    <MessageThinking />
+                  </MessageContent>
+                </Message>
+              )}
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+
+          <div className="shrink-0 bg-background pt-0 pb-8">
+            <PromptInput
+              onSubmit={(message: PromptInputMessage) =>
+                send(message.text.trim())
+              }
+              className="relative w-full rounded-lg border-primary/10 bg-background/95 shadow-xl"
+            >
+              <PromptInputTextarea
+                value={input}
+                placeholder="Ask Verbly a question..."
+                onChange={(event) => setInput(event.currentTarget.value)}
+                className="pr-12"
               />
-            ) : (
-              messages.map((message) => {
-                const hasText = message.parts.some(
-                  (part) => part.type === "text" && part.text.trim()
-                )
-                return (
-                  <Message from={message.role} key={message.id}>
-                    <MessageContent>
-                      {message.parts.map((part, index) =>
-                        part.type === "text" ? (
-                          <MessageResponse key={`${message.id}-${index}`}>
-                            {part.text}
-                          </MessageResponse>
-                        ) : null
-                      )}
-                      {isStreaming &&
-                        message.role === "assistant" &&
-                        message.id === messages.at(-1)?.id &&
-                        !hasText && <MessageThinking />}
-                    </MessageContent>
-                  </Message>
-                )
-              })
-            )}
-            {isStreaming && messages.at(-1)?.role === "user" && (
-              <Message from="assistant">
-                <MessageContent>
-                  <MessageThinking />
-                </MessageContent>
-              </Message>
-            )}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
-        <PromptInput
-          onSubmit={(message: PromptInputMessage) => send(message.text.trim())}
-          className="relative mt-6 w-full rounded-lg border-primary/10 bg-background/95 shadow-xl"
-        >
-          <PromptInputTextarea
-            value={input}
-            placeholder="Ask Verbly Coach a question..."
-            onChange={(event) => setInput(event.currentTarget.value)}
-            className="pr-12"
-          />
-          <PromptInputSubmit
-            status={isStreaming ? "streaming" : "ready"}
-            disabled={!input.trim() && !isStreaming}
-            onClick={isStreaming ? stop : undefined}
-            className="absolute right-1 bottom-1"
-          />
-        </PromptInput>
+              <PromptInputSubmit
+                status={isStreaming ? "streaming" : "ready"}
+                disabled={!input.trim() && !isStreaming}
+                onClick={isStreaming ? stop : undefined}
+                className="absolute right-1 bottom-1"
+              />
+            </PromptInput>
+          </div>
+        </div>
       </div>
     </div>
   )

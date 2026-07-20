@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { generateObject } from "ai"
+import { generateObject, generateText } from "ai"
 import { groq } from "@ai-sdk/groq"
 import { env } from "../env.js"
 
@@ -34,4 +34,24 @@ export async function generateDailyWord(
   })
 
   return result.object
+}
+
+export async function generateChatTitle(firstMessage: string): Promise<string> {
+  try {
+    const result = await generateText({
+      model: groq("llama-3.3-70b-versatile"),
+      prompt: `Generate a short, concise title (max 50 characters) for a conversation that starts with: "${firstMessage}"\n\nOnly return the title, nothing else.`,
+      maxTokens: 20,
+    })
+
+    return (
+      result.text.trim().replace(/^["']|["']$/g, "") ||
+      firstMessage.slice(0, 50)
+    )
+  } catch (error) {
+    // Fallback to simple title generation
+    return (
+      firstMessage.split(/[.!?]/)[0].trim().slice(0, 50) || "New conversation"
+    )
+  }
 }

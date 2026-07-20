@@ -10,7 +10,9 @@ export default async function CoachPage() {
         updatedAt: string
         messages: { id: number; role: "user" | "assistant"; content: string }[]
       }[]
-    }>("/chat/conversations?limit=20")
+    }>("/chat/conversations?limit=20", {
+      tags: ["coach-conversations"],
+    })
     .catch(() => ({ conversations: [] }))
   return <CoachPageClient initialThreads={history.conversations} />
 }
