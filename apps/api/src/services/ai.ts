@@ -39,9 +39,8 @@ export async function generateDailyWord(
 export async function generateChatTitle(firstMessage: string): Promise<string> {
   try {
     const result = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
+      model: groq("gemma2-9b-it"),
       prompt: `Generate a short, concise title (max 50 characters) for a conversation that starts with: "${firstMessage}"\n\nOnly return the title, nothing else.`,
-      maxTokens: 20,
     })
 
     return (
