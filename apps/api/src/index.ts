@@ -5,11 +5,12 @@ import { logger } from "hono/logger"
 import authRoute from "./routes/api/auth.js"
 import wordsRoute from "./routes/api/words.js"
 import profileRoute from "./routes/api/profile.js"
+import chatRoute from "./routes/api/chat.js"
+import notificationsRoute from "./routes/api/notifications.js"
 import { env } from "./env.js"
 import type { AuthType, AppBindings } from "./types.js"
 import type { Context } from "hono"
 import { withAuth } from "./middlewares/auth.js"
-import chatRoute from "./routes/api/chat.js"
 
 const app = new Hono()
 
@@ -65,8 +66,8 @@ api.get("/session", (c: Context<AppBindings>) => {
 
 api.route("/words", wordsRoute)
 api.route("/profile", profileRoute)
-
 api.route("/chat", chatRoute)
+api.route("/notifications", notificationsRoute)
 
 app.route("/", api)
 

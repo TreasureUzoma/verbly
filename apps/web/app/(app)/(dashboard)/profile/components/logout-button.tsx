@@ -26,7 +26,7 @@ export function LogoutButton() {
   return (
     <Button
       onClick={handleLogout}
-      variant="outline"
+      variant="destructive"
       size="sm"
       className="gap-1.5"
       disabled={isPending}

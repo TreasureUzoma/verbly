@@ -6,6 +6,7 @@ import {
   CalendarIcon,
 } from "@phosphor-icons/react/dist/ssr"
 import { LogoutButton } from "./components/logout-button"
+import { NotificationSettings } from "./components/notification-settings"
 import { ProfileData } from "@/types/profile"
 import { LearnedWord } from "@/types/word"
 import { SessionData } from "@/types/auth"
@@ -109,6 +110,15 @@ export default async function ProfilePage() {
                 {profile?.learning?.learnedWordsCount ?? 0}
               </span>
             </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="text-xs font-bold tracking-wider uppercase opacity-60">
+            Notifications
+          </h2>
+          <div className="rounded-md border p-4">
+            <NotificationSettings />
           </div>
         </div>
 
