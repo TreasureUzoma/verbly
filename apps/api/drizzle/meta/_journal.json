@@ -15,6 +15,20 @@
       "when": 1784270023127,
       "tag": "0001_sweet_blink",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784550000000,
+      "tag": "0002_coach_conversations",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784534073407,
+      "tag": "0003_far_scrambler",
+      "breakpoints": true
     }
   ]
 }

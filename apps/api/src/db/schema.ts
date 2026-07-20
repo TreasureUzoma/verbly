@@ -101,3 +101,23 @@ export const learnedWords = pgTable("learned_words", {
     .references(() => dailyWords.id, { onDelete: "cascade" }),
   learnedAt: timestamp("learned_at").defaultNow().notNull(),
 })
+
+export const coachConversations = pgTable("coach_conversations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+export const coachMessages = pgTable("coach_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: uuid("conversation_id")
+    .notNull()
+    .references(() => coachConversations.id, { onDelete: "cascade" }),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})

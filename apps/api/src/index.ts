@@ -9,6 +9,7 @@ import { env } from "./env.js"
 import type { AuthType, AppBindings } from "./types.js"
 import type { Context } from "hono"
 import { withAuth } from "./middlewares/auth.js"
+import chatRoute from "./routes/api/chat.js"
 
 const app = new Hono()
 
@@ -19,7 +20,8 @@ app.notFound((c) => {
 })
 
 app.onError((err, c) => {
-  const isDev = process.env.NODE_ENV === "development"
+  const isDev = process.env.NODE_ENV !== "production"
+  console.error("Unhandled API error", err)
   return c.json(
     {
       success: false,
@@ -63,6 +65,8 @@ api.get("/session", (c: Context<AppBindings>) => {
 
 api.route("/words", wordsRoute)
 api.route("/profile", profileRoute)
+
+api.route("/chat", chatRoute)
 
 app.route("/", api)
 

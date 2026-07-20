@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { revalidateTag } from "next/cache"
 
 type NextFetchOptions = RequestInit & {
+  duplex?: "half"
   next?: NextFetchRequestConfig
   cache?: RequestCache
   params?: Record<string, string | number | boolean | undefined>
@@ -11,10 +12,10 @@ type NextFetchOptions = RequestInit & {
   revalidate?: number | false
 }
 
-export async function api<T>(
+const getApiRequest = async (
   endpoint: string,
   options: NextFetchOptions = {}
-): Promise<T> {
+) => {
   const { params, json, headers, tags, revalidate, ...rest } = options
 
   const baseUrl = process.env.API_BASE
@@ -27,15 +28,13 @@ export async function api<T>(
   }
 
   const cookieStore = await cookies()
-
   const accessToken = cookieStore.get("verblyAccessToken")?.value || ""
   const refreshToken = cookieStore.get("verblyRefreshToken")?.value || ""
 
-  const config: RequestInit = {
+  const response = await fetch(url.toString(), {
     ...rest,
     headers: {
       "Content-Type": "application/json",
-      // Forward tokens upstream to Hono via headers
       "x-access-token": accessToken,
       "x-refresh-token": refreshToken,
       ...headers,
@@ -45,26 +44,9 @@ export async function api<T>(
       tags: tags ?? rest.next?.tags,
       revalidate: revalidate ?? rest.next?.revalidate,
     },
-  }
-
-  const response = await fetch(url.toString(), config)
+  })
 
   const incomingAccess = response.headers.get("x-access-token")
-  if (response.status === 204) return {} as T
-
-  const rawBody = await response.json().catch(() => ({}))
-  const responseBody =
-    rawBody && typeof rawBody === "object" && "data" in rawBody
-      ? (rawBody as any).data
-      : rawBody
-
-  console.log("response body:", responseBody)
-
-  if (!response.ok) {
-    console.log(rawBody)
-    throw new Error(rawBody.message || `API Error: ${response.status}`)
-  }
-
   const incomingRefresh = response.headers.get("x-refresh-token")
 
   if (incomingAccess) {
@@ -85,6 +67,31 @@ export async function api<T>(
     })
   }
 
+  return response
+}
+
+export async function api<T>(
+  endpoint: string,
+  options: NextFetchOptions = {}
+): Promise<T> {
+  const response = await getApiRequest(endpoint, options)
+  if (response.status === 204) return {} as T
+
+  const rawBody = await response.json().catch(() => ({}))
+  const responseBody =
+    rawBody && typeof rawBody === "object" && "data" in rawBody
+      ? (rawBody as any).data
+      : rawBody
+
+  if (!response.ok) {
+    console.error("API request failed", {
+      endpoint,
+      status: response.status,
+      response: rawBody,
+    })
+    throw new Error(rawBody.message || `API Error: ${response.status}`)
+  }
+
   return responseBody as T
 }
 
@@ -98,6 +105,8 @@ api.put = <T>(url: string, body: any, opts?: NextFetchOptions) =>
   api<T>(url, { ...opts, method: "PUT", json: body })
 api.delete = <T>(url: string, opts?: NextFetchOptions) =>
   api<T>(url, { ...opts, method: "DELETE" })
+api.stream = (url: string, opts?: NextFetchOptions) =>
+  getApiRequest(url, { ...opts, method: opts?.method ?? "POST" })
 
 export const invalidate = (...tags: string[]) => {
   tags.forEach((tag) => revalidateTag(tag, "max"))
