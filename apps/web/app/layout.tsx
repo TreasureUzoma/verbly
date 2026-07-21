@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner"
 import "@workspace/ui/globals.css"
 import { ThemeProvider } from "@/providers/next-theme"
 import { cn } from "@workspace/ui/lib/utils"
+import { Metadata } from "next"
+import { meta } from "@workspace/data/meta"
 
 const schibstedGrotesk = Schibsted_Grotesk({
   subsets: ["latin"],
@@ -14,6 +16,11 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: `${meta.name} - Let's Improve your vocabulary`,
+  description: meta.description,
+}
 
 export default function RootLayout({
   children,
