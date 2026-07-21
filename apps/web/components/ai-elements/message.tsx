@@ -312,13 +312,19 @@ export type MessageResponseProps = ComponentProps<typeof Streamdown>
 
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      {...props}
-    />
+    <div className="overflow-x-auto">
+      <Streamdown
+        className={cn(
+          "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+          "[&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
+          "[&_table]:border-collapse",
+          "[&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold",
+          "[&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-left",
+          className
+        )}
+        {...props}
+      />
+    </div>
   ),
   (prevProps, nextProps) => prevProps.children === nextProps.children
 )

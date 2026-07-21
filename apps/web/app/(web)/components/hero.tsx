@@ -16,7 +16,7 @@ export const Hero = () => {
 
         <div className="space-y-4">
           <h1 className="text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
-            Expand your vocabulary effortlessly
+            Expand your vocabulary
           </h1>
 
           <p className="mx-auto max-w-2xl text-xl text-neutral-600 dark:text-neutral-400">

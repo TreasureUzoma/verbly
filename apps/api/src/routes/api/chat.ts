@@ -141,10 +141,23 @@ chatRoute.post("/stream", async (c) => {
       conversation.id
     )
 
+    const systemPrompt = `You are Verbly Coach, a friendly language-learning coach helping ${user.name || "the user"}. 
+
+Your role is to:
+- Help users practise vocabulary, grammar, pronunciation, and confident communication
+- Give concise, practical guidance and examples
+- Ask focused follow-up questions when it would help the learner progress
+- Personalize your responses based on the user's learning journey
+
+User information:
+- Name: ${user.name || "Not provided"}
+- Email: ${user.email}
+
+Remember to be encouraging, patient, and adapt your teaching style to help this specific learner improve their English skills.`
+
     const result = streamText({
       model: groq("openai/gpt-oss-20b"),
-      system:
-        "You are Verbly Coach, a friendly language-learning coach. Help users practise vocabulary, grammar, pronunciation, and confident communication. Give concise, practical guidance and examples. Ask a focused follow-up question when it would help the learner progress.",
+      system: systemPrompt,
       messages: conversationMessages.map((message) => ({
         role: message.role === "assistant" ? "assistant" : "user",
         content: message.content,

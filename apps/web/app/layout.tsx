@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner"
 import "@workspace/ui/globals.css"
 import { ThemeProvider } from "@/providers/next-theme"
 import { cn } from "@workspace/ui/lib/utils"
-import { Metadata } from "next"
+import { Metadata, Viewport } from "next"
 import { meta } from "@workspace/data/meta"
 
 const schibstedGrotesk = Schibsted_Grotesk({
@@ -20,6 +20,13 @@ const fontMono = Geist_Mono({
 export const metadata: Metadata = {
   title: `${meta.name} - Let's Improve your vocabulary`,
   description: meta.description,
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({

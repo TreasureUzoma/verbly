@@ -127,10 +127,36 @@
     @apply bg-background text-foreground;
   }
   .flex-center {
-    @apply justify-center flex items-center;
+    @apply flex items-center justify-center;
   }
   .flex-between {
     @apply flex items-center justify-between;
+  }
+
+  /* Responsive tables in markdown */
+  table {
+    @apply block w-full max-w-full border-collapse overflow-x-auto;
+  }
+
+  thead,
+  tbody,
+  tr {
+    @apply table;
+    @apply w-full;
+  }
+
+  th,
+  td {
+    @apply border border-border px-3 py-2 text-left;
+  }
+
+  th {
+    @apply bg-muted font-semibold;
+  }
+
+  /* Wrapper for scrollable tables */
+  .prose table {
+    @apply block overflow-x-auto whitespace-nowrap;
   }
 }
 
