@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm"
+import { eq, and, desc } from "drizzle-orm"
 import { db } from "../db/index.js"
 import {
   dailyWords,
@@ -27,7 +27,15 @@ export class WordsService {
   }
 
   static async createTodaysWord(date: string) {
-    const generated = await generateDailyWord(date)
+    // Fetch the last 30 days of words to avoid duplicates
+    const recentWords = await db
+      .select({ word: dailyWords.word })
+      .from(dailyWords)
+      .orderBy(desc(dailyWords.date))
+      .limit(30)
+
+    const previousWords = recentWords.map((w) => w.word)
+    const generated = await generateDailyWord(date, previousWords)
 
     try {
       const [newWord] = await db
